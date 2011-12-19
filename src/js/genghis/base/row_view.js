@@ -26,10 +26,11 @@ Genghis.Base.RowView = Backbone.View.extend({
     },
     navigate: function(e) {
         e.preventDefault();
-        App.Router.navigate(Genghis.Util.route($(e.target).attr('href')), true);
+        Genghis.app.router.navigate(Genghis.Util.route($(e.target).attr('href')), true);
     },
     remove: function() {
         $(this.el).remove();
+        this.unbind();
     },
     destroy: function() {
         var model = this.model;

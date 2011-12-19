@@ -1,18 +1,21 @@
 Genghis.Views.Nav = Backbone.View.extend({
-    el: '.navbar nav',
+    tagName: 'div',
     template: _.template($('#nav-template').html()),
     events: {
         'keyup input#navbar-query': 'findDocuments',
         'click a':                  'navigate'
     },
     initialize: function() {
-        _.bindAll(
-            this, 'render', 'toggleSections', 'updateQuery', 'findDocuments', 'navigate', 'navigateToServers',
-            'navigateUp', 'focusSearch'
-        );
+        _.bindAll(this, 'render', 'updateQuery', 'findDocuments', 'navigate', 'navigateToServers', 'navigateUp', 'focusSearch');
 
-        this.model.bind('change', this.toggleSections);
-        this.model.bind('change', this.updateQuery)
+        this.model.bind('change', this.render);
+        this.model.bind('change', this.render);
+        this.model.bind('change', this.render);
+        this.model.bind('change', this.render);
+        this.model.bind('change', this.render);
+
+        this.model.bind('change:query',      this.toggleSections);
+        this.model.bind('change:query',      this.updateQuery);
 
         $('body').bind('click', function(e) {
             $('.dropdown-toggle, .menu').parent('li').removeClass('open');
@@ -24,35 +27,42 @@ Genghis.Views.Nav = Backbone.View.extend({
         this.render();
     },
     render: function() {
+        var view, selection;
+
+        selection = this.model.toJSON(),
+
         $(this.el).html(this.template({query: this.model.get('query')}));
 
         $(document).bind('keyup', '/', this.focusSearch);
 
-        this.ServerNavView = new Genghis.Views.NavSection({
-            el: $('li.server', this.el),
-            model: this.model.CurrentServer,
-            collection: this.model.Servers
-        })
+        if (selection.server) {
+            view = new Genghis.Views.NavSection({
+                model: selection.server,
+                collection: Genghis.servers
+            });
 
-        this.DatabaseNavView = new Genghis.Views.NavSection({
-            el: $('li.database', this.el),
-            model: this.model.CurrentDatabase,
-            collection: this.model.Databases
-        })
+            this.$('ul.nav').append(view.render().el);
+        }
 
-        this.CollectionNavView = new Genghis.Views.NavSection({
-            el: $('li.collection', this.el),
-            model: this.model.CurrentCollection,
-            collection: this.model.Collections
-        })
+        if (selection.database) {
+            view = new Genghis.Views.NavSection({
+                model: selection.database,
+                collection: selection.server.databases
+            });
+
+            this.$('ul.nav').append(view.render().el);
+        }
+
+        if (selection.collection) {
+            view = new Genghis.Views.NavSection({
+                model: selection.collection,
+                collection: selection.database.collections
+            });
+
+            this.$('ul.nav').append(view.render().el);
+        }
 
         return this;
-    },
-    toggleSections: function() {
-        $(this.ServerNavView.el).toggle(this.model.get('server') != null);
-        $(this.DatabaseNavView.el).toggle(this.model.get('database') != null);
-        $(this.CollectionNavView.el).toggle(this.model.get('collection') != null);
-        this.$('form').toggle(this.model.get('collection') != null);
     },
     updateQuery: function() {
         var q = (this.model.get('query') || this.model.get('document') || '')
@@ -70,7 +80,7 @@ Genghis.Views.Nav = Backbone.View.extend({
                 base = Genghis.Util.route(this.model.CurrentCollection.url + '/documents'),
                 url  = base + (q.match(/^([a-z\d]+)$/i) ? '/' + q : '?' + Genghis.Util.buildQuery({q: encodeURIComponent(q)}));
 
-            App.Router.navigate(url, true);
+            Genghis.app.router.navigate(url, true);
         } else if (e.keyCode == 27) {
             this.$('input#navbar-query').blur();
             this.updateQuery();
@@ -78,15 +88,15 @@ Genghis.Views.Nav = Backbone.View.extend({
     },
     navigate: function(e) {
         e.preventDefault();
-        App.Router.navigate(Genghis.Util.route($(e.target).attr('href')), true);
+        Genghis.app.router.navigate(Genghis.Util.route($(e.target).attr('href')), true);
     },
     navigateToServers: function(e) {
         e.preventDefault();
-        App.Router.redirectToIndex();
+        Genghis.app.router.redirectToIndex();
     },
     navigateUp: function(e) {
         e.preventDefault();
-        App.Router.redirectTo(
+        Genghis.app.router.redirectTo(
             this.model.has('database')   && this.model.get('server'),
             this.model.has('collection') && this.model.get('database'),
             (this.model.has('document') || this.model.has('query')) && this.model.get('collection')
@@ -98,4 +108,8 @@ Genghis.Views.Nav = Backbone.View.extend({
             this.$('input#navbar-query').focus();
         }
     }
+});
+
+Genghis.app.addInitializer(function(options) {
+    Genghis.app.nav.show(new Genghis.Views.Nav({model: options.selection}));
 });

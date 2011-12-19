@@ -9,7 +9,7 @@ Genghis.Base.SectionView = Backbone.View.extend({
         _.bindAll(
             this, 'render', 'updateTitle', 'showAddForm', 'showAddFormIfVisible',
             'submitAddForm', 'closeAddForm', 'updateOnKeyup', 'addModel',
-            'addModelAndUpdate', 'addAll'
+            'addModelAndUpdate', 'addAll', 'close'
         );
 
         if (this.model) {
@@ -88,5 +88,9 @@ Genghis.Base.SectionView = Backbone.View.extend({
         this.collection.each(this.addModel);
 
         $(this.el).removeClass('spinning');
+    },
+    close: function() {
+        this.remove();
+        this.unbind();
     }
 });

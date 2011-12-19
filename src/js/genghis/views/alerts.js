@@ -1,5 +1,5 @@
 Genghis.Views.Alerts = Backbone.View.extend({
-    el: 'aside#alerts',
+    tagName: 'div',
     initialize: function() {
         _.bindAll(this, 'render', 'addModel');
 
@@ -14,4 +14,8 @@ Genghis.Views.Alerts = Backbone.View.extend({
         var view = new Genghis.Views.Alert({model: model});
         $(this.el).append(view.render().el);
     }
+});
+
+Genghis.app.addInitializer(function(options) {
+    Genghis.app.alerts.show(new Genghis.Views.Alerts({collection: options.alerts}));
 });

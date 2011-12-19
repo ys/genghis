@@ -3,98 +3,124 @@ Genghis.Models.Selection = Backbone.Model.extend({
         server:     null,
         database:   null,
         collection: null,
-        query:      null,
-        page:       null
+        doc:        null //,
+        // query:      null,
+        // page:       null
     },
     initialize: function() {
         _.bindAll(this, 'select', 'update', 'nextPage', 'previousPage');
-        this.bind('change', this.update);
 
-        this.pagination        = this.options.pagination;
-        this.servers           = this.options.servers;
-        this.currentServer     = this.options.currentServer;
-        this.databases         = this.options.databases;
-        this.currentDatabase   = this.options.currentDatabase;
-        this.collections       = this.options.collections;
-        this.currentCollection = this.options.currentCollection;
-        this.documents         = this.options.documents;
-        this.currentDocument   = this.options.currentDocument;
+        // this.bind('change', this.update);
     },
-    select: function(server, database, collection, documentId, query, page) {
-        this.set({
-            server:     server     || null,
-            database:   database   || null,
-            collection: collection || null,
-            document:   documentId || null,
-            query:      query      || null,
-            page:       page       || null
-        });
+    select: function(serverName, databaseName, collectionName, documentId, query, page) {
+        var sel = {},
+            that = this;
+
+        that.servers = Genghis.servers;
+        that.servers.fetch({success: function() {
+            if (serverName) {
+                sel.server = that.servers.get(serverName);
+                that.databases = sel.server.databases;
+                that.databases.fetch({success: function() {
+                    if (databaseName) {
+                        sel.database = server.databases.get(databaseName);
+                        that.collections = sel.database.collections;
+                        that.collections.fetch({success: function() {
+                            if (collectionName) {
+                                sel.collection = database.collections.get(collectionName);
+                                that.documents = sel.collection.documents;
+                                that.documents.fetch({success: function() {
+                                    if (documentId) {
+                                        sel.doc = collection.documents.get(documentId);
+                                    }
+                                    that.set(sel);
+                                }});
+                            } else {
+                                that.set(sel);
+                            }
+                        }});
+                    } else {
+                        that.set(sel);
+                    }
+                }});
+            } else {
+                that.set(sel);
+            }
+        }});
     },
     update: function() {
-        var server     = this.get('server'),
-            database   = this.get('database'),
-            collection = this.get('collection'),
-            documentId = this.get('document'),
-            query      = this.get('query'),
-            page       = this.get('page'),
-            url        = Genghis.baseUrl,
-            params     = {};
+        var server            = this.get('server'),
+            servers           = this.get('servers'),
+            currentServer     = this.get('currentServer'),
+            database          = this.get('database'),
+            databases         = this.get('databases'),
+            currentDatabase   = this.get('currentDatabase'),
+            collection        = this.get('collection'),
+            collections       = this.get('collections'),
+            currentCollection = this.get('currentCollection'),
+            documentId        = this.get('document'),
+            documents         = this.get('documents'),
+            currentDocument   = this.get('currentDocument'),
+            query             = this.get('query'),
+            page              = this.get('page'),
+            url               = Genghis.baseUrl,
+            params            = {};
 
         url = url + 'servers';
-        this.servers.url = url;
-        this.servers.fetch();
+        servers.url = url;
+        servers.fetch();
 
         if (server) {
             url = url + '/' + server;
-            this.currentServer.url = url;
-            this.currentServer.fetch();
+            currentServer.url = url;
+            currentServer.fetch();
 
             url = url + '/databases';
-            this.databases.url = url;
-            this.databases.fetch();
+            databases.url = url;
+            databases.fetch();
         } else {
-            this.currentServer.clear();
-            this.databases.reset();
+            currentServer.clear();
+            databases.reset();
         }
 
         if (database) {
             url = url + '/' + database;
-            this.currentDatabase.url = url;
-            this.currentDatabase.fetch();
+            currentDatabase.url = url;
+            currentDatabase.fetch();
 
             url = url + '/collections';
-            this.collections.url = url;
-            this.collections.fetch();
+            collections.url = url;
+            collections.fetch();
         } else {
-            this.currentDatabase.clear();
-            this.collections.reset();
+            currentDatabase.clear();
+            collections.reset();
         }
 
         if (collection) {
             url = url + '/' + collection;
-            this.currentCollection.url = url;
-            this.currentCollection.fetch();
+            currentCollection.url = url;
+            currentCollection.fetch();
 
             url = url + '/documents';
 
-            var url_query = '';
+            var urlQuery = '';
             if (query || page) {
                 if (query) params.q = encodeURIComponent(query);
                 if (page)  params.page = encodeURIComponent(page);
-                url_query = '?' + Genghis.Util.buildQuery(params);
+                urlQuery = '?' + Genghis.Util.buildQuery(params);
             }
 
-            this.documents.url = url + url_query;
-            this.documents.fetch();
+            documents.url = url + urlQuery;
+            documents.fetch();
         } else {
-            this.currentCollection.clear();
-            this.documents.reset();
+            currentCollection.clear();
+            documents.reset();
         }
 
         if (documentId) {
-            this.currentDocument.id = documentId;
-            this.currentDocument.urlRoot = url;
-            this.currentDocument.fetch();
+            currentDocument.id = documentId;
+            currentDocument.urlRoot = url;
+            currentDocument.fetch();
         }
     },
     nextPage: function() {

@@ -26,3 +26,7 @@ Genghis.Views.KeyboardShortcuts = Backbone.View.extend({
         $(this.el).modal('toggle');
     }
 });
+
+Genghis.app.addInitializer(function(options) {
+    $(document).append(new Genghis.Views.KeyboardShortcuts().el);
+});
