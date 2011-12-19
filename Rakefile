@@ -61,6 +61,7 @@ script_files = FileList[
   'src/js/jquery.tablesorter.js',
   'src/js/underscore.js',
   'src/js/backbone.js',
+  'vendor/backbone.marionette/backbone.marionette.js',
   'vendor/ace/ace-uncompressed.js',
   'vendor/ace/mode-json.js',
   'vendor/ace/theme-git_hubby.js',

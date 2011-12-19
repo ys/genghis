@@ -7,3 +7,6 @@
 [submodule "vendor/keyscss"]
 	path = vendor/keyscss
 	url = https://github.com/michaelhue/keyscss.git
+[submodule "vendor/backbone.marionette"]
+	path = vendor/backbone.marionette
+	url = https://github.com/derickbailey/backbone.marionette.git
