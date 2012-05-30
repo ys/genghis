@@ -2,20 +2,21 @@ Genghis.Views.DocumentView = Backbone.View.extend({
     tagName: 'article',
     template: Genghis.Templates.DocumentView,
     events: {
-        'click a.id':               'navigate',
-        'click button.edit':        'openEditDialog',
-        // 'dblclick .document':       'openEditDialog',
-        'click button.save':        'saveDocument',
-        'click button.cancel':      'cancelEdit',
-        'click button.destroy':     'destroy',
-        'click .db-ref-ref .value': 'navigateColl',
-        'click .db-ref-db .value':  'navigateDb',
-        'click .db-ref-id .value':  'navigateId'
+        'click a.id':                        'navigate',
+        'click button.edit':                 'openEditDialog',
+        // 'dblclick .document':                'openEditDialog',
+        'click button.save':                 'saveDocument',
+        'click button.cancel':               'cancelEdit',
+        'click button.destroy':              'destroy',
+        'click .db-ref-ref .value':          'navigateColl',
+        'click .db-ref-db .value':           'navigateDb',
+        'click .db-ref-id .value':           'navigateId',
+        'click div.collapser,span.ellipsis': 'collapseCollapser'
     },
     initialize: function() {
         _.bindAll(
-            this, 'render', 'updateDocument', 'navigate', 'openEditDialog', 'cancelEdit', 'saveDocument', 'destroy',
-            'remove', 'navigateColl', 'navigateDb', 'navigateId'
+            this, 'render', 'updateDocument', 'collapseCollapser', 'navigate', 'openEditDialog', 'cancelEdit',
+            'saveDocument', 'destroy', 'remove', 'navigateColl', 'navigateDb', 'navigateId'
         );
 
         this.model.bind('change',  this.updateDocument);
@@ -23,11 +24,52 @@ Genghis.Views.DocumentView = Backbone.View.extend({
     },
     render: function() {
         $(this.el).html(this.template.render(this.model));
+        $('<div class="collapser">-</div>').prependTo($('.document ul', this.el).parent('li, .document'));
         return this;
     },
     updateDocument: function() {
         this.$('.document').html(this.model.prettyPrint()).show();
-        Genghis.Util.attachCollapsers(this.el);
+        $('<div class="collapser">-</div>').prependTo($('.document ul', this.el).parent('li, .document'));
+    },
+    collapseCollapser: function(e) {
+        var $parent    = $(e.target).closest('li, .document'),
+            $target    = $parent.children('ul'),
+            $collapser = $parent.children('.collapser');
+
+        function summary(target) {
+            if (!('collapserSummary' in target.data())) {
+                var $s = $(_.detect(target.find('> li > span.prop'), function(el) {
+                    return (/^\s*(name|title)\s*/i.test($(el).text()));
+                })).siblings('span');
+
+                if ($s.length === 0) {
+                    $s = $(_.detect(target.find('> li > span:not(.prop)'), function(el) {
+                        var $el = $(el);
+                        return $el.hasClass('num') || $el.hasClass('boolean') ||
+                            ($el.hasClass('string') && $el.text().length < 64);
+                    }));
+                }
+
+                if ($s.length) {
+                    var prop = $s.siblings('.prop').text();
+                    target.data('collapserSummary', '<span class="summary">' + (prop ? prop + ': ' : '') + $s.text() + '</span>');
+                } else {
+                    target.data('collapserSummary', '');
+                }
+            }
+
+            return target.data('collapserSummary');
+        }
+
+        if ($target.is(':visible')) {
+            $target.hide();
+            $('<span class="ellipsis"> ' + summary($target) + ' &hellip; </span>').insertBefore($target);
+            $collapser.addClass('collapsed').text('+');
+        } else {
+            $target.siblings('.ellipsis').remove();
+            $target.show();
+            $collapser.removeClass('collapsed').text('-');
+        }
     },
     navigate: function(e) {
         e.preventDefault();

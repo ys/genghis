@@ -40,7 +40,6 @@ Genghis.Views.Documents = Backbone.View.extend({
     addDocument: function(document) {
         var view = new Genghis.Views.DocumentView({model: document}).render();
         this.$('.content').append(view.el);
-        Genghis.Util.attachCollapsers(view.el, (this.collection.size() > 10));
     },
     createDocument: function() {
         this.NewDocumentView.show();
